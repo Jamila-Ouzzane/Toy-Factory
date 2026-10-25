@@ -1,0 +1,322 @@
+[
+ {
+  "id": "b1",
+  "type": "mqtt-broker",
+  "name": "Local",
+  "broker": "localhost",
+  "port": "1883",
+  "clientid": "",
+  "autoConnect": true,
+  "usetls": false,
+  "protocolVersion": "4",
+  "keepalive": "60",
+  "cleansession": true
+ },
+ {
+  "id": "f15",
+  "type": "tab",
+  "label": "Flow15"
+ },
+ {
+  "id": "t15",
+  "type": "ui_tab",
+  "name": "Flow15",
+  "icon": "dashboard",
+  "order": 5
+ },
+ {
+  "id": "g15",
+  "type": "ui_group",
+  "name": "Activité 15",
+  "tab": "t15",
+  "order": 1,
+  "disp": true,
+  "width": "6",
+  "collapse": false
+ },
+ {
+  "id": "m15a",
+  "type": "mqtt in",
+  "z": "f15",
+  "name": "",
+  "topic": "temperature",
+  "qos": "0",
+  "datatype": "auto",
+  "broker": "b1",
+  "x": 130,
+  "y": 80,
+  "wires": [
+   [
+    "d15a",
+    "c15a"
+   ]
+  ]
+ },
+ {
+  "id": "d15a",
+  "type": "debug",
+  "z": "f15",
+  "name": "",
+  "active": true,
+  "tosidebar": true,
+  "console": false,
+  "tostatus": false,
+  "complete": "payload",
+  "targetType": "msg",
+  "x": 380,
+  "y": 60,
+  "wires": []
+ },
+ {
+  "id": "c15a",
+  "type": "change",
+  "z": "f15",
+  "name": "String2Number",
+  "rules": [
+   {
+    "t": "set",
+    "p": "payload",
+    "pt": "msg",
+    "to": "$number(payload)",
+    "tot": "jsonata"
+   }
+  ],
+  "action": "",
+  "property": "",
+  "from": "",
+  "to": "",
+  "reg": false,
+  "x": 380,
+  "y": 120,
+  "wires": [
+   [
+    "d15b",
+    "gg15"
+   ]
+  ]
+ },
+ {
+  "id": "d15b",
+  "type": "debug",
+  "z": "f15",
+  "name": "",
+  "active": true,
+  "tosidebar": true,
+  "console": false,
+  "tostatus": false,
+  "complete": "payload",
+  "targetType": "msg",
+  "x": 600,
+  "y": 100,
+  "wires": []
+ },
+ {
+  "id": "gg15",
+  "type": "ui_gauge",
+  "z": "f15",
+  "name": "gauge",
+  "group": "g15",
+  "order": 1,
+  "width": 3,
+  "height": 3,
+  "gtype": "gage",
+  "title": "Température",
+  "label": "°C",
+  "format": "{{value}}",
+  "min": 0,
+  "max": 100,
+  "colors": [
+   "#00b500",
+   "#e6e600",
+   "#ca3838"
+  ],
+  "seg1": "",
+  "seg2": "",
+  "x": 600,
+  "y": 150,
+  "wires": []
+ },
+ {
+  "id": "m15b",
+  "type": "mqtt in",
+  "z": "f15",
+  "name": "",
+  "topic": "voixdb",
+  "qos": "0",
+  "datatype": "auto",
+  "broker": "b1",
+  "x": 130,
+  "y": 240,
+  "wires": [
+   [
+    "c15b"
+   ]
+  ]
+ },
+ {
+  "id": "c15b",
+  "type": "change",
+  "z": "f15",
+  "name": "String2Number",
+  "rules": [
+   {
+    "t": "set",
+    "p": "payload",
+    "pt": "msg",
+    "to": "$number(payload)",
+    "tot": "jsonata"
+   }
+  ],
+  "action": "",
+  "property": "",
+  "from": "",
+  "to": "",
+  "reg": false,
+  "x": 380,
+  "y": 240,
+  "wires": [
+   [
+    "d15c",
+    "cp15"
+   ]
+  ]
+ },
+ {
+  "id": "d15c",
+  "type": "debug",
+  "z": "f15",
+  "name": "",
+  "active": true,
+  "tosidebar": true,
+  "console": false,
+  "tostatus": false,
+  "complete": "payload",
+  "targetType": "msg",
+  "x": 600,
+  "y": 220,
+  "wires": []
+ },
+ {
+  "id": "cp15",
+  "type": "ui_gauge",
+  "z": "f15",
+  "name": "Compass",
+  "group": "g15",
+  "order": 2,
+  "width": 3,
+  "height": 3,
+  "gtype": "compass",
+  "title": "Voix",
+  "label": "dB",
+  "format": "{{value}}",
+  "min": 0,
+  "max": 360,
+  "colors": [
+   "#00b500",
+   "#e6e600",
+   "#ca3838"
+  ],
+  "seg1": "",
+  "seg2": "",
+  "x": 600,
+  "y": 270,
+  "wires": []
+ },
+ {
+  "id": "ub",
+  "type": "ui_base",
+  "theme": {
+   "name": "theme-light",
+   "lightTheme": {
+    "default": "#0094CE",
+    "baseColor": "#0094CE",
+    "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Oxygen,Ubuntu,Cantarell,Fira Sans,Droid Sans,Helvetica Neue,sans-serif",
+    "edited": true,
+    "reset": false
+   },
+   "darkTheme": {
+    "default": "#097479",
+    "baseColor": "#097479",
+    "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Oxygen,Ubuntu,Cantarell,Fira Sans,Droid Sans,Helvetica Neue,sans-serif",
+    "edited": false
+   },
+   "customTheme": {
+    "name": "Untitled Theme 1",
+    "default": "#4B7930",
+    "baseColor": "#4B7930",
+    "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Oxygen,Ubuntu,Cantarell,Fira Sans,Droid Sans,Helvetica Neue,sans-serif"
+   },
+   "themeState": {
+    "base-color": {
+     "default": "#0094CE",
+     "value": "#0094CE",
+     "edited": false
+    },
+    "page-titlebar-backgroundColor": {
+     "value": "#0094CE",
+     "edited": false
+    },
+    "page-backgroundColor": {
+     "value": "#fafafa",
+     "edited": false
+    },
+    "page-sidebar-backgroundColor": {
+     "value": "#ffffff",
+     "edited": false
+    },
+    "group-textColor": {
+     "value": "#1bbfff",
+     "edited": false
+    },
+    "group-borderColor": {
+     "value": "#ffffff",
+     "edited": false
+    },
+    "group-backgroundColor": {
+     "value": "#ffffff",
+     "edited": false
+    },
+    "widget-textColor": {
+     "value": "#111111",
+     "edited": false
+    },
+    "widget-backgroundColor": {
+     "value": "#0094ce",
+     "edited": false
+    },
+    "widget-borderColor": {
+     "value": "#ffffff",
+     "edited": false
+    },
+    "base-font": {
+     "value": "-apple-system,BlinkMacSystemFont,Segoe UI,Oxygen,Ubuntu,Cantarell,Fira Sans,Droid Sans,Helvetica Neue,sans-serif"
+    }
+   },
+   "angularTheme": {
+    "primary": "indigo",
+    "accents": "blue",
+    "warn": "red",
+    "background": "grey",
+    "palette": "light"
+   }
+  },
+  "site": {
+   "name": "Node-RED Dashboard",
+   "hideToolbar": "false",
+   "allowSwipe": "false",
+   "lockMenu": "false",
+   "allowTempTheme": "true",
+   "dateFormat": "DD/MM/YYYY",
+   "sizes": {
+    "sx": 48,
+    "sy": 48,
+    "gx": 6,
+    "gy": 6,
+    "cx": 6,
+    "cy": 6,
+    "px": 0,
+    "py": 0
+   }
+  }
+ }
+]

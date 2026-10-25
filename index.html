@@ -1,0 +1,575 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<title>ToyFactory 4.0</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  :root { --bg:#0f1720; --panel:#182430; --line:#2a3a4a; --txt:#e6edf3; --mut:#8aa0b4; --acc:#38bdf8;
+          --svgbg:#111c27; --track:#1e2f3f; --belt:#1f2937; --btn:#22384a; --logbg:#0c141c; }
+  :root[data-theme=light] { --bg:#eef2f6; --panel:#ffffff; --line:#c7d2de; --txt:#12202e; --mut:#55697d; --acc:#0369a1;
+          --svgbg:#f7fafc; --track:#dbe4ec; --belt:#cbd5e1; --btn:#e2e8f0; --logbg:#f1f5f9; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--txt); font:14px/1.4 "Segoe UI",system-ui,sans-serif; }
+  header { padding:10px 18px; border-bottom:1px solid var(--line); display:flex; align-items:center; gap:14px; flex-wrap:wrap; }
+  header h1 { margin:0; font-size:18px; } header span { color:var(--mut); font-size:12px; flex:1; }
+  .tools { display:flex; gap:6px; }
+  main { display:grid; grid-template-columns:minmax(0,1fr) 300px; gap:12px; padding:12px; }
+  @media (max-width:980px){ main{ grid-template-columns:1fr; } }
+  @media (max-width:600px){ main{ padding:8px; } header span{ display:none; } aside{ padding:10px; } }
+  .stage { overflow-x:auto; border:1px solid var(--line); border-radius:8px; background:var(--svgbg); }
+  svg#sim { display:block; width:100%; min-width:760px; height:auto; }
+  aside { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:12px; }
+  aside h3 { margin:12px 0 6px; font-size:12px; text-transform:uppercase; letter-spacing:.08em; color:var(--mut); }
+  aside h3:first-child { margin-top:0; }
+  .btns { display:flex; gap:6px; flex-wrap:wrap; }
+  button { background:var(--btn); color:var(--txt); border:1px solid var(--line); padding:6px 12px; border-radius:6px; cursor:pointer; font:inherit; }
+  button:hover { border-color:var(--acc); }
+  button.go { background:#166534; color:#fff; } button.stop { background:#7f1d1d; color:#fff; } button.chal { background:#6d28d9; color:#fff; }
+  button.warn { background:#9a3412; color:#fff; }
+  label { display:block; margin:8px 0 0; font-size:13px; }
+  label b { float:right; color:var(--acc); font-variant-numeric:tabular-nums; }
+  label.chk { display:flex; gap:8px; align-items:center; }
+  input[type=range] { width:100%; accent-color:var(--acc); }
+  #log { height:130px; overflow:auto; background:var(--logbg); border:1px solid var(--line); border-radius:6px; padding:6px; font:12px/1.5 Consolas,monospace; color:var(--mut); }
+  #log .bad { color:#ef4444; } #log .ok { color:#16a34a; } #log .warn { color:#f97316; }
+  text { font-family:"Segoe UI",system-ui,sans-serif; fill:var(--txt); }
+  text.w { fill:#fff; }
+  .small { font-size:12px; fill:var(--mut); }
+  .pnl { fill:var(--panel); stroke:var(--line); }
+  .track { fill:var(--track); }
+  .beltbody { fill:var(--belt); stroke:#64748b; stroke-width:2; }
+  .clk { cursor:pointer; }
+  @keyframes blink { 0%,100%{ fill:#7f1d1d; } 50%{ fill:#ef4444; } }
+  .alert { animation:blink .6s infinite; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🧸 <span style="display:inline;flex:none;color:inherit;font-size:inherit" data-i18n="title"></span></h1>
+  <span data-i18n="sub"></span>
+  <div class="tools">
+    <span id="iot" title="MQTT ws://localhost:9001" style="font-size:12px;align-self:center;color:var(--mut)">IoT ○</span>
+    <button id="bLang" title="FR / EN">EN</button>
+    <button id="bTheme" title="Theme">🌙</button>
+    <button id="bSound" title="Sound">🔊</button>
+  </div>
+</header>
+<main>
+<div class="stage">
+<svg id="sim" viewBox="0 0 1200 660" xmlns="http://www.w3.org/2000/svg">
+  <text id="mode" x="24" y="30" font-size="16" font-weight="600"></text>
+  <text id="clock" x="1176" y="30" font-size="22" text-anchor="end" font-weight="700">00:00</text>
+  <rect class="track" x="24" y="44" width="1152" height="14" rx="7"/>
+  <rect id="bar" x="24" y="44" width="0" height="14" rx="7" fill="#22c55e"/>
+  <text id="barTxt" x="600" y="72" font-size="12" text-anchor="middle" class="small"></text>
+
+  <!-- Source -->
+  <rect x="24" y="206" width="84" height="66" rx="8" fill="#334155" stroke="#64748b" stroke-width="2"/>
+  <text class="w" x="66" y="236" font-size="14" text-anchor="middle" font-weight="600" data-i18n="source"></text>
+  <text id="srcTxt" x="66" y="255" font-size="11" text-anchor="middle" fill="#cbd5e1" style="fill:#cbd5e1"></text>
+
+  <!-- Convoyeur -->
+  <rect class="beltbody" x="108" y="262" width="700" height="18" rx="4"/>
+  <line id="belt" x1="112" y1="271" x2="804" y2="271" stroke="#64748b" stroke-width="4" stroke-dasharray="8 14"/>
+  <path d="M808 268 L950 150 M808 274 L950 380" stroke="#64748b" stroke-width="6" fill="none" stroke-linecap="round"/>
+  <text x="440" y="304" font-size="12" text-anchor="middle" class="small" data-i18n="conveyor"></text>
+
+  <!-- Emballage -->
+  <text id="packH" x="430" y="106" font-size="11" text-anchor="middle" class="small"></text>
+  <rect class="track" x="380" y="111" width="100" height="5" rx="2"/><rect id="packW" x="380" y="111" width="0" height="5" rx="2" fill="#22c55e"/>
+  <rect id="pack" class="clk" x="380" y="120" width="100" height="112" rx="8" fill="#334155" stroke="#94a3b8" stroke-width="2"/>
+  <text class="w" x="430" y="146" font-size="14" text-anchor="middle" font-weight="600" pointer-events="none" data-i18n="packName"></text>
+  <text class="w" id="packTxt" x="430" y="196" font-size="12" text-anchor="middle" pointer-events="none"></text>
+  <rect x="396" y="208" width="68" height="6" rx="3" fill="#0f172a"/><rect id="packBar" x="396" y="208" width="0" height="6" rx="3" fill="#fff"/>
+  <circle id="sPres" cx="360" cy="291" r="7" fill="#1e3a5f" stroke="#38bdf8" stroke-width="2"/>
+  <text x="360" y="316" font-size="10" text-anchor="middle" class="small" data-i18n="sPres"></text>
+
+  <!-- Contrôle qualité -->
+  <text id="qcH" x="680" y="106" font-size="11" text-anchor="middle" class="small"></text>
+  <rect class="track" x="630" y="111" width="100" height="5" rx="2"/><rect id="qcW" x="630" y="111" width="0" height="5" rx="2" fill="#22c55e"/>
+  <rect id="qc" class="clk" x="630" y="120" width="100" height="112" rx="8" fill="#334155" stroke="#94a3b8" stroke-width="2"/>
+  <text class="w" x="680" y="146" font-size="14" text-anchor="middle" font-weight="600" pointer-events="none" data-i18n="qcName"></text>
+  <circle id="qcLight" cx="680" cy="172" r="14" fill="#475569" stroke="#0f172a" stroke-width="3" pointer-events="none"/>
+  <text class="w" id="qcTxt" x="680" y="204" font-size="12" text-anchor="middle" pointer-events="none"></text>
+  <rect x="646" y="216" width="68" height="6" rx="3" fill="#0f172a"/><rect id="qcBar" x="646" y="216" width="0" height="6" rx="3" fill="#fff"/>
+  <circle id="sCnt" cx="770" cy="291" r="7" fill="#1e3a5f" stroke="#38bdf8" stroke-width="2"/>
+  <text x="770" y="316" font-size="10" text-anchor="middle" class="small" data-i18n="sCnt"></text>
+
+  <!-- Sorties -->
+  <rect x="950" y="90" width="226" height="120" rx="10" fill="#14532d" stroke="#22c55e" stroke-width="2"/>
+  <text class="w" x="1063" y="116" font-size="14" text-anchor="middle" font-weight="600" data-i18n="stock"></text>
+  <text class="w" id="stockTxt" x="1063" y="176" font-size="40" text-anchor="middle" font-weight="700">0</text>
+  <rect x="950" y="330" width="226" height="120" rx="10" fill="#7f1d1d" stroke="#ef4444" stroke-width="2"/>
+  <text class="w" x="1063" y="356" font-size="14" text-anchor="middle" font-weight="600" data-i18n="reject"></text>
+  <text class="w" id="rejTxt" x="1063" y="416" font-size="40" text-anchor="middle" font-weight="700">0</text>
+  <text x="1063" y="470" font-size="11" text-anchor="middle" class="small" data-i18n="exitZone"></text>
+
+  <g id="items"></g>
+
+  <!-- Tableau de performance -->
+  <rect class="pnl" x="24" y="340" width="520" height="165" rx="8"/>
+  <text x="40" y="364" font-size="13" font-weight="600" data-i18n="perfTitle"></text>
+  <text id="perf" x="40" y="390" font-size="13"></text>
+  <text id="perf2" x="40" y="413" font-size="13"></text>
+  <text id="perf3" x="40" y="436" font-size="13"></text>
+  <text id="perf4" x="40" y="459" font-size="13"></text>
+  <text id="perf5" x="40" y="482" font-size="13"></text>
+
+  <!-- Mini-dashboard capteurs -->
+  <rect id="dash" class="pnl" x="570" y="340" width="360" height="165" rx="8"/>
+  <text x="586" y="364" font-size="13" font-weight="600" data-i18n="dashTitle"></text>
+  <text id="d1" x="586" y="386" font-size="13"></text>
+  <text id="d2" x="586" y="406" font-size="13"></text>
+  <text id="d3" x="586" y="426" font-size="13"></text>
+  <text id="d4" x="586" y="446" font-size="13"></text>
+  <text id="alertTxt" x="586" y="470" font-size="14" font-weight="700" style="fill:#ef4444"></text>
+  <text id="predTxt" x="586" y="492" font-size="13" font-weight="700" style="fill:#f97316"></text>
+
+  <!-- Résultat défi -->
+  <g id="result" display="none">
+    <rect x="300" y="525" width="600" height="100" rx="14" id="resBox"/>
+    <text class="w" id="resTxt" x="600" y="586" font-size="28" font-weight="700" text-anchor="middle"></text>
+  </g>
+  <text x="24" y="652" font-size="11" class="small" data-i18n="footer"></text>
+</svg>
+</div>
+
+<aside>
+  <h3 data-i18n="h_sim"></h3>
+  <div class="btns">
+    <button class="go" id="bStart">▶ Start</button>
+    <button class="stop" id="bStop">■ Stop</button>
+    <button id="bReset">↺ Reset</button>
+    <button class="chal" id="bChal" data-i18n="b_chal"></button>
+  </div>
+  <h3 data-i18n="h_params"></h3>
+  <label><span data-i18n="l_speed"></span><b id="vSpeed"></b><input type="range" id="speed" min="30" max="300" value="100"></label>
+  <label><span data-i18n="l_pack"></span><b id="vPack"></b><input type="range" id="tPack" min="0.5" max="10" step="0.5" value="3"></label>
+  <label><span data-i18n="l_qc"></span><b id="vQc"></b><input type="range" id="tQc" min="0.5" max="10" step="0.5" value="2"></label>
+  <label><span data-i18n="l_def"></span><b id="vDef"></b><input type="range" id="def" min="0" max="100" value="20"></label>
+  <label><span data-i18n="l_spawn"></span><b id="vSpawn"></b><input type="range" id="spawn" min="1" max="10" step="0.5" value="5"></label>
+  <label><span data-i18n="l_ts"></span><b id="vTs"></b><input type="range" id="ts" min="1" max="20" value="1"></label>
+  <h3 data-i18n="h_maint"></h3>
+  <label class="chk"><input type="checkbox" id="fail" checked><span data-i18n="l_fail"></span></label>
+  <div class="btns" style="margin-top:8px">
+    <button id="bMaintP" data-i18n="b_maintP"></button>
+    <button id="bMaintQ" data-i18n="b_maintQ"></button>
+    <button class="warn" id="bBreak" data-i18n="b_break"></button>
+  </div>
+  <div class="small" style="margin-top:6px" data-i18n="hint_click"></div>
+  <h3 data-i18n="h_log"></h3>
+  <div id="log"></div>
+  <div class="small" style="margin-top:8px" id="best"></div>
+</aside>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/mqtt@5/dist/mqtt.min.js"></script>
+<script>
+const NS = "http://www.w3.org/2000/svg";
+const $ = id => document.getElementById(id);
+const X0 = 130, Y = 250, GAP = 34, FORK = 810;
+const WEAR = 0.8, MAINT_TIME = 5;          // usure %/s d'utilisation, durée maintenance (s)
+const TARGET = { ok:[1000,150], ko:[1000,390] };
+const P = { speed:100, tPack:3, tQc:2, def:0.2, spawn:5, ts:1, fail:true };
+const st = {};
+let last = 0, lang = 'fr', muted = false;
+
+/* ---------- i18n ---------- */
+const L = {
+  fr: {
+    title:'ToyFactory 4.0', sub:'Source → Convoyeur → Emballage → Contrôle qualité → Stock / Rejet',
+    modeFree:'Mode libre', modeChal:'🏆 MODE DÉFI : 100 conformes en 10 min',
+    barGoal:'Objectif défi : 100 conformes en 10 min',
+    barChal:(ok,rest)=>`Défi : ${ok} / 100 conformes – temps restant ${rest}`,
+    source:'SOURCE', conveyor:'CONVOYEUR', packName:'EMBALLAGE', qcName:'CONTRÔLE',
+    sPres:'présence', sCnt:'comptage', stock:'STOCK FINAL', reject:'BAC DE REJET', exitZone:'ZONE DE SORTIE',
+    perfTitle:'TABLEAU DE PERFORMANCE', dashTitle:'MINI-DASHBOARD CAPTEURS & SANTÉ',
+    footer:'Rendu 100 % SVG – aucune image externe',
+    idle:'En attente', packing:'Emballage en cours', checking:'Contrôle en cours', sat:'SATURÉ', broken:'PANNE', maint:'Maintenance…',
+    blocked:'bloquée', every:s=>`1 / ${s} s`,
+    p1:(m,p)=>`Production totale : ${m}   |   Emballés : ${p}`,
+    p2:(o,k,r)=>`Conformes : ${o}   |   Rejets : ${k}   |   Taux de défaut : ${r} %`,
+    p3:(w,a,b)=>`En attente : ${w}   |   Utilisation emballage ${a} %  contrôle ${b} %`,
+    p4:(g,c)=>`Goulot : ${g}   |   Cadence : ${c} conformes/min`,
+    p5:r=>`Rendement : ${r} % des produits traités`,
+    none:'aucun', pk:'EMBALLAGE', qk:'CONTRÔLE',
+    d1:on=>`Capteur présence : ${on?'PRODUIT':'libre'}`, d2:n=>`Capteur comptage : ${n} produits`,
+    d3:r=>`Défaut mesuré : ${r} %  (seuil 30 %)`, d4:(a,b)=>`Santé : emballage ${a} %  ·  contrôle ${b} %`,
+    alertDef:'⚠ ALERTE : taux de défaut trop élevé',
+    predBreak:n=>`💥 PANNE : ${n}`, predMaint:(n,s)=>`🔧 Maintenance conseillée : ${n} (~${s} s restant)`,
+    wear:'Usure', h_sim:'Simulation', h_params:'Paramètres (temps réel)', h_maint:'Maintenance prédictive', h_log:'Journal',
+    b_chal:'🏆 Mode défi', b_maintP:'🔧 Emballage', b_maintQ:'🔧 Contrôle', b_break:'💥 Provoquer une panne',
+    l_speed:'Vitesse convoyeur', l_pack:"Temps d'emballage", l_qc:'Temps de contrôle', l_def:'Taux de défaut',
+    l_spawn:'Cadence source (1 produit / …)', l_ts:'Vitesse de simulation', l_fail:'Pannes aléatoires (usure)',
+    hint_click:'Astuce : cliquez sur une machine pour lancer sa maintenance (5 s).',
+    best:t=>`🏅 Meilleur défi : ${t}`,
+    win:t=>`🎉 DÉFI RÉUSSI en ${t} !`, lose:o=>`❌ ÉCHEC : ${o}/100 conformes en 10 min`,
+    lgSpawn:(n,t)=>`Produit #${n} généré (${t})`, lgPack:n=>`Produit #${n} emballé`,
+    lgQc:(n,bad)=>`Produit #${n} : ${bad?'REJET':'conforme'}`, lgAlert:'ALERTE défaut > 30 %',
+    lgChal:'Défi lancé ! Astuce : réduisez la cadence source et accélérez la simulation.',
+    lgWin:'Défi réussi !', lgLose:'Défi échoué',
+    lgBreak:n=>`💥 Panne : ${n}`, lgMaint:n=>`🔧 Maintenance démarrée : ${n}`, lgFixed:n=>`✅ ${n} remise en service`,
+    lgWarn:n=>`⚠ Usure élevée : ${n}`
+  },
+  en: {
+    title:'ToyFactory 4.0', sub:'Source → Conveyor → Packing → Quality control → Stock / Reject',
+    modeFree:'Free mode', modeChal:'🏆 CHALLENGE: 100 good items in 10 min',
+    barGoal:'Challenge goal: 100 good items in 10 min',
+    barChal:(ok,rest)=>`Challenge: ${ok} / 100 good – time left ${rest}`,
+    source:'SOURCE', conveyor:'CONVEYOR', packName:'PACKING', qcName:'QUALITY',
+    sPres:'presence', sCnt:'counting', stock:'FINAL STOCK', reject:'REJECT BIN', exitZone:'OUTPUT ZONE',
+    perfTitle:'PERFORMANCE TABLE', dashTitle:'SENSORS & HEALTH DASHBOARD',
+    footer:'100 % SVG rendering – no external images',
+    idle:'Idle', packing:'Packing…', checking:'Inspecting…', sat:'SATURATED', broken:'BREAKDOWN', maint:'Maintenance…',
+    blocked:'blocked', every:s=>`1 / ${s} s`,
+    p1:(m,p)=>`Total output: ${m}   |   Packed: ${p}`,
+    p2:(o,k,r)=>`Good: ${o}   |   Rejects: ${k}   |   Defect rate: ${r} %`,
+    p3:(w,a,b)=>`Waiting: ${w}   |   Utilization packing ${a} %  QC ${b} %`,
+    p4:(g,c)=>`Bottleneck: ${g}   |   Rate: ${c} good/min`,
+    p5:r=>`Yield: ${r} % of products processed`,
+    none:'none', pk:'PACKING', qk:'QC',
+    d1:on=>`Presence sensor: ${on?'PRODUCT':'clear'}`, d2:n=>`Count sensor: ${n} products`,
+    d3:r=>`Measured defects: ${r} %  (limit 30 %)`, d4:(a,b)=>`Health: packing ${a} %  ·  QC ${b} %`,
+    alertDef:'⚠ ALERT: defect rate too high',
+    predBreak:n=>`💥 BREAKDOWN: ${n}`, predMaint:(n,s)=>`🔧 Maintenance advised: ${n} (~${s} s left)`,
+    wear:'Wear', h_sim:'Simulation', h_params:'Parameters (live)', h_maint:'Predictive maintenance', h_log:'Log',
+    b_chal:'🏆 Challenge', b_maintP:'🔧 Packing', b_maintQ:'🔧 QC', b_break:'💥 Trigger a breakdown',
+    l_speed:'Conveyor speed', l_pack:'Packing time', l_qc:'Inspection time', l_def:'Defect rate',
+    l_spawn:'Source rate (1 item / …)', l_ts:'Simulation speed', l_fail:'Random breakdowns (wear)',
+    hint_click:'Tip: click a machine to start its maintenance (5 s).',
+    best:t=>`🏅 Best challenge: ${t}`,
+    win:t=>`🎉 CHALLENGE WON in ${t}!`, lose:o=>`❌ FAILED: ${o}/100 good items in 10 min`,
+    lgSpawn:(n,t)=>`Product #${n} created (${t})`, lgPack:n=>`Product #${n} packed`,
+    lgQc:(n,bad)=>`Product #${n}: ${bad?'REJECTED':'good'}`, lgAlert:'ALERT defects > 30 %',
+    lgChal:'Challenge started! Tip: lower the source interval and speed up the simulation.',
+    lgWin:'Challenge won!', lgLose:'Challenge failed',
+    lgBreak:n=>`💥 Breakdown: ${n}`, lgMaint:n=>`🔧 Maintenance started: ${n}`, lgFixed:n=>`✅ ${n} back online`,
+    lgWarn:n=>`⚠ High wear: ${n}`
+  }
+};
+const T = (k, ...a) => { const v = L[lang][k]; return typeof v === 'function' ? v(...a) : v; };
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.querySelectorAll('[data-i18n]').forEach(e => e.textContent = T(e.dataset.i18n));
+  $('bLang').textContent = lang === 'fr' ? 'EN' : 'FR';
+  showBest();
+}
+
+/* ---------- son ---------- */
+let audioCtx, lastBeep = 0;
+function beep(f, d = .15, type = 'sine', vol = .07, delay = 0) {
+  if (muted || performance.now() - lastBeep < 80) return;
+  lastBeep = performance.now();
+  try {
+    audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain(), t0 = audioCtx.currentTime + delay;
+    o.type = type; o.frequency.value = f; g.gain.value = vol;
+    o.connect(g); g.connect(audioCtx.destination); o.start(t0); o.stop(t0 + d);
+  } catch (e) {}
+}
+const alarm = () => { beep(600,.12,'square'); setTimeout(()=>{ lastBeep=0; beep(420,.2,'square'); },140); };
+
+/* ---------- état ---------- */
+function newStations() {
+  const mk = (x,key,nm) => ({ x, key, nm, busy:false, prog:0, cur:null, busyT:0, wear:0, temp:25, broken:false, maint:0, warned:false });
+  return { pack: mk(430,'tPack','pk'), qc: mk(680,'tQc','qk') };
+}
+function reset() {
+  $('items').innerHTML = '';
+  Object.assign(st, { running:false, t:0, spawnT:0, id:0, items:[], stations:newStations(),
+    made:0, packed:0, ok:0, ko:0, cntSensor:0, lightT:0, dashOff:0, sensT:0,
+    challenge:false, over:false, resWin:null, sBlocked:false, alerted:false });
+  $('result').setAttribute('display','none');
+  $('qcLight').setAttribute('fill','#475569');
+  $('bar').setAttribute('width', 0);
+  render();
+}
+function log(msg, cls = '') {
+  const d = document.createElement('div'); d.className = cls;
+  d.textContent = `[${fmt(st.t)}] ${msg}`; $('log').prepend(d);
+  while ($('log').children.length > 60) $('log').lastChild.remove();
+}
+const fmt = s => String(Math.floor(s/60)).padStart(2,'0') + ':' + String(Math.floor(s%60)).padStart(2,'0');
+
+/* ---------- jouets aléatoires (SVG pur, centrés en 0,0, ~26 px) ---------- */
+const TOYS = [
+  { n:['Ourson','Teddy bear'], d:(a,b,c)=>`<circle cx="-8" cy="-9" r="4" fill="${a}"/><circle cx="8" cy="-9" r="4" fill="${a}"/><circle cx="-8" cy="-9" r="2" fill="${c}"/><circle cx="8" cy="-9" r="2" fill="${c}"/>
+    <circle cy="6" r="8" fill="${a}"/><circle cy="7" r="4.5" fill="${b}"/><circle cy="-4" r="9" fill="${a}"/><ellipse cy="-1" rx="4" ry="3" fill="${b}"/>
+    <circle cx="-3.5" cy="-6" r="1.4" fill="#111"/><circle cx="3.5" cy="-6" r="1.4" fill="#111"/><circle cy="-2" r="1.6" fill="#111"/>` },
+  { n:['Robot','Robot'], d:(a,b,c)=>`<line x1="0" y1="-13" x2="0" y2="-9" stroke="#94a3b8" stroke-width="2"/><circle cy="-13" r="2" fill="${c}"/>
+    <rect x="-9" y="-9" width="18" height="11" rx="3" fill="${a}"/><rect x="-11" y="3" width="22" height="10" rx="2" fill="${b}"/>
+    <circle cx="-4" cy="-4" r="2.5" fill="#fff"/><circle cx="4" cy="-4" r="2.5" fill="#fff"/><circle cx="-4" cy="-4" r="1" fill="#111"/><circle cx="4" cy="-4" r="1" fill="#111"/>
+    <rect x="-5" y="6" width="10" height="3" fill="${c}"/><rect x="-14" y="4" width="3" height="7" rx="1" fill="${a}"/><rect x="11" y="4" width="3" height="7" rx="1" fill="${a}"/>` },
+  { n:['Voiture','Toy car'], d:(a,b,c)=>`<path d="M-13 4 L-13 -1 L-8 -2 L-5 -9 L6 -9 L10 -2 L13 -1 L13 4 Z" fill="${a}"/>
+    <path d="M-4 -2 L-2 -7 L2 -7 L2 -2 Z M4 -2 L4 -7 L6 -7 L8.5 -2 Z" fill="#bae6fd"/><rect x="-13" y="2" width="26" height="3" fill="${b}"/>
+    <circle cx="-7" cy="6" r="4.5" fill="#1f2937"/><circle cx="7" cy="6" r="4.5" fill="#1f2937"/><circle cx="-7" cy="6" r="1.8" fill="${c}"/><circle cx="7" cy="6" r="1.8" fill="${c}"/>` },
+  { n:['Fusée','Rocket'], d:(a,b,c)=>`<path d="M-4 8 L-10 12 L-4 2 Z M4 8 L10 12 L4 2 Z" fill="${b}"/><path d="M0 -13 C7 -6 6 4 4 9 L-4 9 C-6 4 -7 -6 0 -13 Z" fill="${a}"/>
+    <circle cy="-3" r="3.2" fill="#bae6fd" stroke="${c}" stroke-width="1.2"/><path d="M-3 9 L0 14 L3 9 Z" fill="#fbbf24"/><path d="M-4 -7 Q0 -12 4 -7 Q0 -9 -4 -7" fill="${c}"/>` },
+  { n:['Canard','Rubber duck'], d:(a,b,c)=>`<ellipse cx="-1" cy="6" rx="12" ry="7" fill="${a}"/><path d="M8 3 Q14 -2 12 8" fill="${a}"/><circle cx="6" cy="-4" r="6.5" fill="${a}"/>
+    <path d="M11 -3 L16 -1 L11 0 Z" fill="${b}"/><circle cx="8" cy="-5" r="1.4" fill="#111"/><path d="M-8 5 Q-3 10 3 5 Q-2 2 -8 5" fill="${c}" opacity=".7"/>` },
+  { n:['Ballon','Beach ball'], d:(a,b,c)=>`<circle r="12" fill="${a}"/><path d="M0 -12 Q-8 0 0 12 Q-3 0 0 -12" fill="${b}"/><path d="M0 -12 Q8 0 0 12 Q3 0 0 -12" fill="${c}"/>
+    <path d="M-12 0 Q0 -4 12 0 Q0 4 -12 0" fill="#fff" opacity=".85"/><circle cx="-4" cy="-6" r="2.5" fill="#fff" opacity=".5"/>` },
+  { n:['Cubes','Building blocks'], d:(a,b,c)=>`<rect x="-13" y="2" width="12" height="11" rx="1.5" fill="${a}"/><rect x="1" y="2" width="12" height="11" rx="1.5" fill="${b}"/><rect x="-6" y="-9" width="12" height="11" rx="1.5" fill="${c}"/>
+    <text x="-7" y="11" font-size="8" font-weight="700" style="fill:#fff" text-anchor="middle">A</text><text x="7" y="11" font-size="8" font-weight="700" style="fill:#fff" text-anchor="middle">B</text><text x="0" y="0" font-size="8" font-weight="700" style="fill:#fff" text-anchor="middle">C</text>` },
+  { n:['Avion','Toy plane'], d:(a,b,c)=>`<path d="M-13 -1 L-4 -2 L-2 -12 L2 -12 L3 -2 L13 0 L3 2 L2 11 L-2 11 L-4 2 Z" fill="${a}" transform="rotate(90)"/><ellipse rx="3" ry="11" fill="${b}" transform="rotate(90)"/><circle cx="6" r="2.2" fill="#bae6fd"/><rect x="-12" y="-5" width="3" height="10" fill="${c}"/>` }
+];
+const rnd = n => Math.floor(Math.random() * n);
+function makeToy() {
+  const h = rnd(360), a = `hsl(${h},78%,55%)`, b = `hsl(${(h+45)%360},85%,62%)`, c = `hsl(${(h+180)%360},75%,58%)`;
+  const t = TOYS[rnd(TOYS.length)];
+  return { t, a, html:
+    `<g class="toy">${t.d(a,b,c)}</g>` +
+    `<g class="box" display="none"><rect x="-14" y="-14" width="28" height="28" rx="3" fill="${a}" stroke="rgba(0,0,0,.35)" stroke-width="1"/>
+      <rect x="-3" y="-14" width="6" height="28" fill="#fff" opacity=".9"/><rect x="-14" y="-3" width="28" height="6" fill="#fff" opacity=".9"/>
+      <circle cx="-4" cy="-15" r="3.5" fill="${b}"/><circle cx="4" cy="-15" r="3.5" fill="${b}"/><circle cy="-14" r="2" fill="#fff"/></g>` +
+    `<rect class="ring" x="-17" y="-17" width="34" height="34" rx="6" fill="none" stroke="transparent" stroke-width="3"/>` };
+}
+
+function spawn() {
+  const first = st.items.filter(i=>i.stage<3).reduce((m,i)=>Math.min(m,i.x), Infinity);
+  if (first < X0 + GAP) { st.sBlocked = true; return false; }
+  st.sBlocked = false;
+  const g = document.createElementNS(NS,'g');
+  const toy = makeToy();
+  g.innerHTML = toy.html;
+  $('items').appendChild(g);
+  const [toyG, boxG, ring] = g.children;
+  st.items.push({ id:++st.id, x:X0, y:Y - 1, stage:0, g, toyG, boxG, ring, toy:toy.t, blocked:false, proc:false, bad:false });
+  st.made++; log(T('lgSpawn', st.id, toy.t.n[lang === 'fr' ? 0 : 1]));
+  return true;
+}
+
+function breakdown(s) {
+  if (s.broken) return;
+  s.broken = true; iotAlert(`Panne : ${s.nm==='pk'?'Emballage':'Contrôle'}`); log(T('lgBreak', T(s.nm)), 'bad'); alarm();
+}
+function startMaint(s) {
+  if (s.maint > 0) return;
+  s.maint = MAINT_TIME; log(T('lgMaint', T(s.nm)), 'warn');
+}
+
+function step(dt) {
+  st.t += dt;
+  st.spawnT += dt;
+  if (st.spawnT >= P.spawn) st.spawnT = spawn() ? 0 : P.spawn;
+
+  for (const [name, s] of Object.entries(st.stations)) {
+    const active = s.busy && !s.broken && s.maint <= 0;
+    const target = s.broken ? 25 : active ? 40 + s.wear * 0.5 : 25 + s.wear * 0.1;
+    s.temp += (target - s.temp) * Math.min(1, 0.4 * dt);
+    if (s.maint > 0) {
+      s.maint -= dt;
+      if (s.maint <= 0) { s.wear = 0; s.broken = false; s.warned = false; log(T('lgFixed', T(s.nm)), 'ok'); }
+      continue;
+    }
+    if (!s.busy || s.broken) continue;
+    s.busyT += dt; s.prog += dt; s.wear = Math.min(100, s.wear + WEAR * dt);
+    if (s.wear >= 70 && !s.warned) { s.warned = true; iotAlert(`Usure élevée : ${s.nm==='pk'?'Emballage':'Contrôle'}`); log(T('lgWarn', T(s.nm)), 'warn'); beep(500,.2,'triangle'); }
+    if (P.fail && Math.random() < (0.002 + (s.wear/100) ** 2 * 0.04) * dt) breakdown(s);
+    if (s.broken) continue;
+    if (s.prog >= P[s.key]) {
+      const p = s.cur; s.busy = false; s.cur = null; p.proc = false; p.stage++;
+      if (name === 'pack') {
+        st.packed++; log(T('lgPack', p.id));
+        p.toyG.setAttribute('display','none'); p.boxG.removeAttribute('display');
+      } else {
+        p.bad = Math.random() < P.def; st.lightT = 0.8;
+        $('qcLight').setAttribute('fill', p.bad ? '#ef4444' : '#22c55e');
+        p.ring.setAttribute('stroke', p.bad ? '#ef4444' : '#22c55e');
+        log(T('lgQc', p.id, p.bad), p.bad ? 'bad' : 'ok');
+        if (p.bad) beep(160,.25,'sawtooth'); else beep(880,.06,'sine',.04);
+      }
+    }
+  }
+  if (st.lightT > 0 && (st.lightT -= dt) <= 0) $('qcLight').setAttribute('fill','#475569');
+
+  const move = P.speed * dt;
+  const belt = st.items.filter(i=>i.stage<3).sort((a,b)=>b.x-a.x);
+  belt.forEach((p, idx) => {
+    p.blocked = false;
+    if (p.proc) return;
+    let dx = move;
+    const ahead = belt[idx-1];
+    if (ahead && p.x + dx > ahead.x - GAP) dx = Math.max(0, ahead.x - GAP - p.x);
+    if (dx < move * 0.5) p.blocked = true;
+    const s = p.stage===0 ? st.stations.pack : p.stage===1 ? st.stations.qc : null;
+    if (s && !s.busy && p.x < s.x && p.x + dx >= s.x) {
+      p.x = s.x; p.proc = true; s.busy = true; s.prog = 0; s.cur = p; return;
+    }
+    p.x += dx;
+    if (p.stage===2 && p.x >= 770 && !p.counted) { p.counted = true; st.cntSensor++; st.sensT = 0.25; }
+    if (p.stage===2 && p.x >= FORK) p.stage = 3;
+  });
+  for (const p of st.items) {
+    if (p.stage !== 3 || p.done) continue;
+    const [tx,ty] = p.bad ? TARGET.ko : TARGET.ok;
+    const dx = tx-p.x, dy = ty-p.y, d = Math.hypot(dx,dy);
+    if (d <= move) { p.done = true; p.bad ? st.ko++ : st.ok++; p.g.remove(); }
+    else { p.x += dx/d*move; p.y += dy/d*move; }
+  }
+  st.items = st.items.filter(p => !p.done);
+
+  if (st.challenge && !st.over) {
+    if (st.ok >= 100) endChallenge(true);
+    else if (st.t >= 600) endChallenge(false);
+  }
+  if (st.sensT > 0) st.sensT -= dt;
+}
+
+function endChallenge(win) {
+  st.over = true; st.running = false; st.resWin = win;
+  log(T(win ? 'lgWin' : 'lgLose'), win ? 'ok' : 'bad');
+  if (win) {
+    [523,659,784,1047].forEach((f,i) => setTimeout(()=>{ lastBeep=0; beep(f,.18,'triangle'); }, i*160));
+    try { const b = +localStorage.best || Infinity; if (st.t < b) localStorage.best = Math.round(st.t); } catch(e){}
+  } else alarm();
+  showBest();
+}
+function showBest() {
+  let b = 0; try { b = +localStorage.best; } catch(e){}
+  $('best').textContent = b ? T('best', fmt(b)) : '';
+}
+
+function stationColor(s, name) {
+  const waiting = st.items.filter(i => i.blocked && !i.proc && i.stage === (name==='pack'?0:1)).length;
+  if (s.broken) return ['#dc2626', waiting];
+  if (s.maint > 0) return ['#ca8a04', waiting];
+  if (waiting >= 2) return ['#f97316', waiting];
+  return [s.busy ? (name==='pack' ? '#0ea5e9' : '#8b5cf6') : '#334155', waiting];
+}
+const wearColor = w => w >= 70 ? '#ef4444' : w >= 40 ? '#f59e0b' : '#22c55e';
+
+function render() {
+  const S = st.stations, tot = st.ok + st.ko, rate = tot ? st.ko / tot * 100 : 0;
+  const [cp, wp] = stationColor(S.pack,'pack'), [cq, wq] = stationColor(S.qc,'qc');
+  $('pack').setAttribute('fill', cp); $('qc').setAttribute('fill', cq);
+  const label = (s, w, busyKey) => s.broken ? T('broken') : s.maint > 0 ? T('maint') : s.busy ? T(busyKey) : (w>=2 ? T('sat') : T('idle'));
+  $('packTxt').textContent = label(S.pack, wp, 'packing');
+  $('qcTxt').textContent = label(S.qc, wq, 'checking');
+  $('packBar').setAttribute('width', S.pack.busy ? 68*S.pack.prog/P.tPack : 0);
+  $('qcBar').setAttribute('width', S.qc.busy ? 68*S.qc.prog/P.tQc : 0);
+  for (const [id, s] of [['pack',S.pack],['qc',S.qc]]) {
+    $(id+'H').textContent = `${T('wear')} ${Math.round(s.wear)} % · ${Math.round(s.temp)} °C`;
+    $(id+'W').setAttribute('width', s.wear); $(id+'W').setAttribute('fill', wearColor(s.wear));
+  }
+  const pres = st.items.some(i=>i.stage===0 && Math.abs(i.x-360)<14);
+  $('sPres').setAttribute('fill', pres ? '#38bdf8' : '#1e3a5f');
+  $('sCnt').setAttribute('fill', st.sensT > 0 ? '#38bdf8' : '#1e3a5f');
+  for (const p of st.items) p.g.setAttribute('transform', `translate(${p.x.toFixed(1)},${p.y.toFixed(1)})`);
+  $('stockTxt').textContent = st.ok; $('rejTxt').textContent = st.ko;
+  $('srcTxt').textContent = st.sBlocked ? T('blocked') : T('every', P.spawn);
+  $('belt').setAttribute('stroke-dashoffset', -st.dashOff);
+
+  const waiting = wp + wq;
+  const u = n => st.t > 0 ? Math.round(S[n].busyT / st.t * 100) : 0;
+  $('perf').textContent  = T('p1', st.made, st.packed);
+  $('perf2').textContent = T('p2', st.ok, st.ko, rate.toFixed(1));
+  $('perf3').textContent = T('p3', waiting, u('pack'), u('qc'));
+  $('perf4').textContent = T('p4', wp>=2 ? T('pk') : wq>=2 ? T('qk') : T('none'), st.t>30 ? (st.ok/st.t*60).toFixed(1) : '–');
+  $('perf5').textContent = T('p5', st.made ? Math.round(tot/st.made*100) : 0);
+
+  $('mode').textContent = T(st.challenge ? 'modeChal' : 'modeFree');
+  $('clock').textContent = fmt(st.challenge ? Math.max(0, 600 - st.t) : st.t);
+  if (st.challenge) {
+    $('bar').setAttribute('width', 1152 * Math.min(1, st.ok/100));
+    $('barTxt').textContent = T('barChal', st.ok, fmt(Math.max(0,600-st.t)));
+  } else $('barTxt').textContent = T('barGoal');
+
+  $('d1').textContent = T('d1', pres);
+  $('d2').textContent = T('d2', st.cntSensor);
+  $('d3').textContent = T('d3', rate.toFixed(1));
+  $('d4').textContent = T('d4', Math.round(100-S.pack.wear), Math.round(100-S.qc.wear));
+  const alert = tot >= 5 && rate > 30;
+  $('dash').setAttribute('class', alert ? 'pnl alert' : 'pnl');
+  $('alertTxt').textContent = alert ? T('alertDef') : '';
+  if (alert && !st.alerted) { log(T('lgAlert'), 'warn'); alarm(); iotAlert(`Taux de défaut > 30 % (${rate.toFixed(1)} %)`); }
+  st.alerted = alert;
+
+  // maintenance prédictive : panne > usure critique > rien
+  let pred = '';
+  const broken = Object.values(S).find(s => s.broken);
+  const worn = Object.values(S).filter(s => s.wear >= 70 && !s.broken && s.maint <= 0).sort((a,b)=>b.wear-a.wear)[0];
+  if (broken) pred = T('predBreak', T(broken.nm));
+  else if (worn) pred = T('predMaint', T(worn.nm), Math.round((100-worn.wear)/WEAR));
+  $('predTxt').textContent = pred;
+
+  if (st.resWin === null) $('result').setAttribute('display','none');
+  else {
+    $('result').removeAttribute('display');
+    $('resBox').setAttribute('fill', st.resWin ? '#166534' : '#7f1d1d');
+    $('resTxt').textContent = st.resWin ? T('win', fmt(st.t)) : T('lose', st.ok);
+  }
+}
+
+function loop(ts) {
+  const real = Math.min(0.1, (ts - last) / 1000); last = ts;
+  if (st.running) {
+    let left = real * P.ts;
+    while (left > 0 && st.running) { const d = Math.min(0.05, left); step(d); st.dashOff += P.speed*d; left -= d; }
+  }
+  render(); requestAnimationFrame(loop);
+}
+
+/* ---------- IoT : MQTT (broker local, dashboard Node-RED) ---------- */
+let mq = null;
+const iotAlert = msg => { if (mq && mq.connected) mq.publish('usine/alert', JSON.stringify({ msg })); };
+function stateOf(s) { return s.broken ? 'PANNE' : s.maint > 0 ? 'maintenance' : s.busy ? 'actif' : 'repos'; }
+function telemetry() {
+  if (!mq || !mq.connected) return;
+  const S = st.stations, tot = st.ok + st.ko;
+  const m = s => ({ wear:+s.wear.toFixed(1), temp:+s.temp.toFixed(1), state:stateOf(s) });
+  mq.publish('usine/telemetry', JSON.stringify({ ts:Date.now(), t:Math.round(st.t), made:st.made, packed:st.packed,
+    ok:st.ok, ko:st.ko, rate:(tot ? st.ko/tot*100 : 0).toFixed(1), waiting:st.items.filter(i=>i.blocked && !i.proc).length,
+    sensorCount:st.cntSensor, pack:m(S.pack), qc:m(S.qc), running:st.running }));
+}
+function iotConnect() {
+  if (!window.mqtt) return;
+  mq = mqtt.connect('ws://localhost:9001', { reconnectPeriod:3000 });
+  const dot = ok => { $('iot').textContent = ok ? 'IoT ●' : 'IoT ○'; $('iot').style.color = ok ? '#22c55e' : ''; };
+  mq.on('connect', () => { dot(true); mq.subscribe('usine/cmd'); });
+  mq.on('close', () => dot(false));
+  mq.on('message', (_, m) => {
+    const c = m.toString().trim();
+    if (c === 'maint_pack') startMaint(st.stations.pack);
+    else if (c === 'maint_qc') startMaint(st.stations.qc);
+    else if (c === 'break') $('bBreak').onclick();
+    else if (c === 'start') $('bStart').onclick();
+    else if (c === 'stop') st.running = false;
+    else if (c === 'reset') reset();
+  });
+  setInterval(telemetry, 1000);
+}
+
+/* ---------- contrôles ---------- */
+const sliders = { speed:['speed','vSpeed',v=>v+' px/s'], tPack:['tPack','vPack',v=>v+' s'], tQc:['tQc','vQc',v=>v+' s'],
+  def:['def','vDef',v=>v+' %'], spawn:['spawn','vSpawn',v=>v+' s'], ts:['ts','vTs',v=>'×'+v] };
+for (const [key,[id,lab,f]] of Object.entries(sliders)) {
+  const el = $(id), upd = () => { P[key] = key==='def' ? el.value/100 : +el.value; $(lab).textContent = f(el.value); };
+  el.addEventListener('input', upd); upd();
+}
+$('fail').onchange = e => { P.fail = e.target.checked; };
+$('bStart').onclick = () => { if (!st.over) { st.running = true; beep(700,.08); } };
+$('bStop').onclick  = () => { st.running = false; };
+$('bReset').onclick = reset;
+$('bChal').onclick  = () => { reset(); st.challenge = true; st.running = true; log(T('lgChal')); };
+$('bMaintP').onclick = $('pack').onclick = () => startMaint(st.stations.pack);
+$('bMaintQ').onclick = $('qc').onclick   = () => startMaint(st.stations.qc);
+$('bBreak').onclick = () => {
+  const ok = Object.values(st.stations).filter(s => !s.broken && s.maint <= 0);
+  if (ok.length) breakdown(ok[Math.floor(Math.random()*ok.length)]);
+};
+function setTheme(t) {
+  document.documentElement.dataset.theme = t; $('bTheme').textContent = t === 'dark' ? '🌙' : '☀️';
+  try { localStorage.theme = t; } catch(e){}
+}
+$('bTheme').onclick = () => setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark');
+$('bLang').onclick = () => { lang = lang === 'fr' ? 'en' : 'fr'; try { localStorage.lang = lang; } catch(e){} applyLang(); };
+$('bSound').onclick = () => { muted = !muted; $('bSound').textContent = muted ? '🔇' : '🔊'; };
+
+try { lang = localStorage.lang === 'en' ? 'en' : 'fr'; } catch(e){}
+let th = 'dark'; try { th = localStorage.theme === 'light' ? 'light' : 'dark'; } catch(e){}
+setTheme(th); applyLang(); reset(); iotConnect(); requestAnimationFrame(loop);
+</script>
+</body>
+</html>

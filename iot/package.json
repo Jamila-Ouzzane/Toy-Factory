@@ -1,0 +1,12 @@
+{
+  "name": "toyfactory-4-0",
+  "private": true,
+  "scripts": {
+    "nodered": "node-red -u nrdata -p 1880",
+    "start": "node start.js"
+  },
+  "dependencies": {
+    "node-red": "^5.0.7",
+    "node-red-dashboard": "^3.6.6"
+  }
+}

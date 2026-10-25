@@ -1,0 +1,429 @@
+[
+ {
+  "id": "tab_led",
+  "type": "tab",
+  "label": "Activit\u00c3\u00a9 15 - LED MQTT",
+  "disabled": false,
+  "info": ""
+ },
+ {
+  "id": "ui_tab_home",
+  "type": "ui_tab",
+  "name": "Home",
+  "icon": "dashboard",
+  "order": 1,
+  "disabled": false,
+  "hidden": false
+ },
+ {
+  "id": "ui_group_house",
+  "type": "ui_group",
+  "name": "House",
+  "tab": "ui_tab_home",
+  "order": 1,
+  "disp": true,
+  "width": "6",
+  "collapse": false
+ },
+ {
+  "id": "mqtt_broker",
+  "type": "mqtt-broker",
+  "name": "",
+  "broker": "localhost",
+  "port": "1883",
+  "clientid": "",
+  "autoConnect": true,
+  "usetls": false,
+  "protocolVersion": "4",
+  "keepalive": "60",
+  "cleansession": true,
+  "autoUnsubscribe": true,
+  "birthTopic": "",
+  "birthQos": "0",
+  "birthPayload": "",
+  "birthMsg": {},
+  "closeTopic": "",
+  "closeQos": "0",
+  "closePayload": "",
+  "closeMsg": {},
+  "willTopic": "",
+  "willQos": "0",
+  "willPayload": "",
+  "willMsg": {},
+  "userProps": "",
+  "sessionExpiry": ""
+ },
+ {
+  "id": "2d7d2228135608e1",
+  "type": "ui_base",
+  "theme": {
+   "name": "theme-light",
+   "lightTheme": {
+    "default": "#0094CE",
+    "baseColor": "#0094CE",
+    "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif",
+    "edited": false
+   },
+   "darkTheme": {
+    "default": "#097479",
+    "baseColor": "#097479",
+    "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif",
+    "edited": false
+   },
+   "customTheme": {
+    "name": "Untitled Theme 1",
+    "default": "#4B7930",
+    "baseColor": "#4B7930",
+    "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif"
+   },
+   "themeState": {
+    "base-color": {
+     "default": "#0094CE",
+     "value": "#0094CE",
+     "edited": false
+    },
+    "page-titlebar-backgroundColor": {
+     "value": "#0094CE",
+     "edited": false
+    },
+    "page-backgroundColor": {
+     "value": "#fafafa",
+     "edited": false
+    },
+    "page-sidebar-backgroundColor": {
+     "value": "#ffffff",
+     "edited": false
+    },
+    "group-textColor": {
+     "value": "#1bbfff",
+     "edited": false
+    },
+    "group-borderColor": {
+     "value": "#ffffff",
+     "edited": false
+    },
+    "group-backgroundColor": {
+     "value": "#ffffff",
+     "edited": false
+    },
+    "widget-textColor": {
+     "value": "#111111",
+     "edited": false
+    },
+    "widget-backgroundColor": {
+     "value": "#0094ce",
+     "edited": false
+    },
+    "widget-borderColor": {
+     "value": "#ffffff",
+     "edited": false
+    },
+    "base-font": {
+     "value": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif"
+    }
+   },
+   "angularTheme": {
+    "primary": "indigo",
+    "accents": "blue",
+    "warn": "red",
+    "background": "grey",
+    "palette": "light"
+   }
+  },
+  "site": {
+   "name": "Node-RED Dashboard",
+   "hideToolbar": "false",
+   "allowSwipe": "false",
+   "lockMenu": "false",
+   "allowTempTheme": "true",
+   "dateFormat": "DD/MM/YYYY",
+   "sizes": {
+    "sx": 48,
+    "sy": 48,
+    "gx": 6,
+    "gy": 6,
+    "cx": 6,
+    "cy": 6,
+    "px": 0,
+    "py": 0
+   }
+  }
+ },
+ {
+  "id": "sw_lamp",
+  "type": "ui_switch",
+  "z": "tab_led",
+  "name": "",
+  "label": "switch",
+  "tooltip": "",
+  "group": "ui_group_house",
+  "order": 1,
+  "width": 0,
+  "height": 0,
+  "passthru": true,
+  "decouple": "false",
+  "topic": "topic",
+  "topicType": "msg",
+  "style": "",
+  "onvalue": "on",
+  "onvalueType": "str",
+  "onicon": "",
+  "oncolor": "",
+  "offvalue": "off",
+  "offvalueType": "str",
+  "officon": "",
+  "offcolor": "",
+  "animate": false,
+  "className": "",
+  "x": 150,
+  "y": 100,
+  "wires": [
+   [
+    "mqtt_out",
+    "dbg"
+   ]
+  ]
+ },
+ {
+  "id": "mqtt_out",
+  "type": "mqtt out",
+  "z": "tab_led",
+  "name": "",
+  "topic": "room/lamp",
+  "qos": "",
+  "retain": "",
+  "respTopic": "",
+  "contentType": "",
+  "userProps": "",
+  "correl": "",
+  "expiry": "",
+  "broker": "mqtt_broker",
+  "x": 400,
+  "y": 100,
+  "wires": []
+ },
+ {
+  "id": "dbg",
+  "type": "debug",
+  "z": "tab_led",
+  "name": "payload",
+  "active": true,
+  "tosidebar": true,
+  "console": false,
+  "tostatus": false,
+  "complete": "payload",
+  "targetType": "msg",
+  "x": 400,
+  "y": 160,
+  "wires": []
+ },
+ {
+  "id": "ui_group_sensor",
+  "type": "ui_group",
+  "name": "Capteur HC-SR04",
+  "tab": "ui_tab_home",
+  "order": 2,
+  "disp": true,
+  "width": "6",
+  "collapse": false
+ },
+ {
+  "id": "mqtt_dist_in",
+  "type": "mqtt in",
+  "z": "tab_led",
+  "name": "",
+  "topic": "room/distance",
+  "qos": "0",
+  "datatype": "auto-detect",
+  "broker": "mqtt_broker",
+  "nl": false,
+  "rap": true,
+  "rh": 0,
+  "inputs": 0,
+  "x": 150,
+  "y": 260,
+  "wires": [
+   [
+    "g_dist",
+    "c_dist"
+   ]
+  ]
+ },
+ {
+  "id": "g_dist",
+  "type": "ui_gauge",
+  "z": "tab_led",
+  "name": "",
+  "group": "ui_group_sensor",
+  "order": 1,
+  "width": 0,
+  "height": 0,
+  "gtype": "gage",
+  "title": "Distance",
+  "label": "cm",
+  "format": "{{value}}",
+  "min": 0,
+  "max": 200,
+  "colors": [
+   "#e63946",
+   "#f4a261",
+   "#2a9d8f"
+  ],
+  "seg1": "20",
+  "seg2": "50",
+  "diff": false,
+  "className": "",
+  "x": 420,
+  "y": 240,
+  "wires": []
+ },
+ {
+  "id": "c_dist",
+  "type": "ui_chart",
+  "z": "tab_led",
+  "name": "",
+  "group": "ui_group_sensor",
+  "order": 2,
+  "width": 0,
+  "height": 0,
+  "label": "Distance (cm)",
+  "chartType": "line",
+  "legend": "false",
+  "xformat": "HH:mm:ss",
+  "interpolate": "linear",
+  "nodata": "En attente de donnees...",
+  "dot": false,
+  "ymin": "0",
+  "ymax": "200",
+  "removeOlder": 1,
+  "removeOlderPoints": "",
+  "removeOlderUnit": "60",
+  "cutout": 0,
+  "useOneColor": false,
+  "useUTC": false,
+  "colors": [
+   "#1f77b4",
+   "#aec7e8",
+   "#ff7f0e",
+   "#2ca02c",
+   "#98df8a",
+   "#d62728",
+   "#ff9896",
+   "#9467bd",
+   "#c5b0d5"
+  ],
+  "outputs": 1,
+  "useDifferentColor": false,
+  "className": "",
+  "x": 430,
+  "y": 290,
+  "wires": [
+   []
+  ]
+ },
+ {
+  "id": "mqtt_pres_in",
+  "type": "mqtt in",
+  "z": "tab_led",
+  "name": "",
+  "topic": "room/presence",
+  "qos": "0",
+  "datatype": "auto-detect",
+  "broker": "mqtt_broker",
+  "nl": false,
+  "rap": true,
+  "rh": 0,
+  "inputs": 0,
+  "x": 150,
+  "y": 360,
+  "wires": [
+   [
+    "fn_pres"
+   ]
+  ]
+ },
+ {
+  "id": "fn_pres",
+  "type": "function",
+  "z": "tab_led",
+  "name": "texte presence",
+  "func": "msg.payload = (msg.payload == '1') ? 'Presence detectee' : 'Aucune presence';\nreturn msg;",
+  "outputs": 1,
+  "x": 340,
+  "y": 360,
+  "wires": [
+   [
+    "t_pres"
+   ]
+  ]
+ },
+ {
+  "id": "t_pres",
+  "type": "ui_text",
+  "z": "tab_led",
+  "group": "ui_group_sensor",
+  "order": 3,
+  "width": 0,
+  "height": 0,
+  "name": "",
+  "label": "Etat",
+  "format": "{{msg.payload}}",
+  "layout": "row-spread",
+  "className": "",
+  "x": 540,
+  "y": 360,
+  "wires": []
+ },
+ {
+  "id": "sw_auto",
+  "type": "ui_switch",
+  "z": "tab_led",
+  "name": "",
+  "label": "Mode automatique",
+  "tooltip": "LED allumee si objet < 20 cm",
+  "group": "ui_group_sensor",
+  "order": 4,
+  "width": 0,
+  "height": 0,
+  "passthru": true,
+  "decouple": "false",
+  "topic": "topic",
+  "topicType": "msg",
+  "style": "",
+  "onvalue": "on",
+  "onvalueType": "str",
+  "onicon": "",
+  "oncolor": "",
+  "offvalue": "off",
+  "offvalueType": "str",
+  "officon": "",
+  "offcolor": "",
+  "animate": false,
+  "className": "",
+  "x": 170,
+  "y": 440,
+  "wires": [
+   [
+    "mqtt_auto_out"
+   ]
+  ]
+ },
+ {
+  "id": "mqtt_auto_out",
+  "type": "mqtt out",
+  "z": "tab_led",
+  "name": "",
+  "topic": "room/auto",
+  "qos": "",
+  "retain": "",
+  "respTopic": "",
+  "contentType": "",
+  "userProps": "",
+  "correl": "",
+  "expiry": "",
+  "broker": "mqtt_broker",
+  "x": 420,
+  "y": 440,
+  "wires": []
+ }
+]
